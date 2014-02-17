@@ -32,6 +32,7 @@ require_once dirname(__FILE__) . '/db_base.php';
  * @category   Kumbia
  * @package    Db
  */
+if (!in_array("Db", get_declared_classes())) {
 class Db
 {
 
@@ -99,4 +100,5 @@ class Db
         return new $dbclass($config);
     }
 
+}
 }

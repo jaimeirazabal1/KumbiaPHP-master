@@ -1,0 +1,26 @@
+
+<?php View::content() ?>
+<center>
+	<h2>Lista de Usuarios</h2>
+</center>
+<br>
+<?php if (!empty($usuarios)): ?>
+	<?php foreach ($usuarios as $key => $value): ?>
+		<div class="container well">
+			<div class="row">
+			  <div class="col-md-4"><b>Nombre de Usuario</b></div>
+			  <div class="col-md-4"><?php echo $value->nombre_usuario ?><br><?php echo Html::link("regla/permisos/".$value->id,"Permisos") ?>&nbsp;|&nbsp;<?php echo Html::link("usuario/perfil/$value->id","Perfil") ?></div>
+			</div>
+			<div class="row">
+			  <div class="col-md-4"><b>Nombre Completo</b></div>
+			  <div class="col-md-4"><?php echo $value->nombre." ".$value->apellido ?></div>
+			</div>
+			<div class="row">
+			  <div class="col-md-4"><b>Cédula</b></div>
+			  <div class="col-md-4"><?php echo $value->cedula ?></div>
+			</div>
+		</div>
+	<?php endforeach ?>
+<?php echo Html::link("usuario/nuevo","Nuevo Usuario","class='btn btn-primary center-block'") ?>
+<?php endif ?>
+		

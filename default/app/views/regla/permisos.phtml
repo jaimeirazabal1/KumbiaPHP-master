@@ -1,0 +1,45 @@
+
+<?php View::content() ?>
+<center>
+	<h2>Permisos</h2>
+</center>
+<br>
+<?php // public static function check($field, $checkValue, $attrs = NULL, $checked = NULL) ?>
+<div class="list-group">
+<?php echo Form::open() ?>
+	<div class="checkbox">
+		<b>Administrador</b>
+		<?php if ($reglas["admin"]): ?>
+			<div style="display:inline;padding-top:50px"><?php echo Form::check("admin",1,null,1) ?></div>	
+		<?php else: ?>
+			<div style="display:inline"><?php echo Form::check("admin",1) ?></div>	
+		<?php endif ?>
+	</div>
+<?php if (!empty($posibles_rutas)): ?>
+	<ul class="list-group">
+	<?php foreach ($posibles_rutas as $key => $value): ?>
+		<?php foreach ($value as $k => $v): ?>
+			 <a class="list-group-item">
+				<?php $str = substr(strtolower($key), 0, -10)."/".$v ?>
+				<span class="badge" style="background:white;">
+				<?php if (in_array($str, $reglas)): ?>
+					<div class="col"><?php echo Form::check("permiso[".$str."]",1,null,1) ?></div>
+				<?php else: ?>
+					<div class="col"><?php echo Form::check("permiso[".$str."]",1) ?></div>
+				<?php endif; ?>
+				</span>
+				<b><?php echo $str ?></b><!--ruta -->
+			</a>
+		<?php endforeach ?>
+	<?php endforeach ?>
+	</ul>
+</div>
+<div class="form-group">
+	<?php echo Form::submit("Aceptar","class=\"pull-right btn btn-success\" ") ?>
+	<?php echo Html::link("usuario/","Lista de Usuarios","class=\"btn btn-default pull-right\" ") ?>
+
+	<div class="clearfix"></div>
+</div>
+<?php echo Form::close() ?>
+<?php endif ?>
+		

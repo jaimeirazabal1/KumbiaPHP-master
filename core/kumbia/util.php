@@ -220,10 +220,44 @@ class Util
     /**
     *   imprime un objeto o arreglo ($p) con la etiqueta pre
     */
-    public function pre($p){
+    public static function pre($p){
         echo "<pre>";
         print_r($p);
         echo "</pre>";
+    }
+    public static function crearArchivoPhp($option = "w+",$ruta,$nombre_archivo,$contenido,$extension = "php"){
+        try {
+            $fp = fopen($ruta."$nombre_archivo.$extension",$option);
+            fwrite($fp, $contenido);
+            fclose($fp);
+            return true;
+        } catch (Exception $e) {
+            return false;
+            Flash::error($e->getMessage());
+        }
+        
+    }
+    public static function crearDirectorio($estructura,$mode = 0777,$recursive = true){
+        try {
+            if(!mkdir($estructura, $mode, $recursive)) {
+                return false;
+            }
+            return true;
+        } catch (Exception $e) {
+            Flash::error($e->getMessage());
+        }
+    }
+    public static function getArchivos($path,$obvia = array()){
+        $directorio = opendir($path);
+        $directorios = array();
+        while ($archivo = readdir($directorio)){
+            if (!is_dir($archivo) and !in_array($archivo, $obvia)){
+                if ($archivo != '.' and $archivo != '..') {
+                    $directorios[]=$archivo;
+                }
+            }
+        }
+        return $directorios;
     }
 
 

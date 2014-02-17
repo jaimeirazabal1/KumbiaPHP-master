@@ -1,9 +1,11 @@
 <?php 
 /**
  * clase para configurar el archivo databases.ini
- * desde interfaz grafica
+ * desde interfaz grafica.
+ * Esta clase se puede usar para escribir otro .ini
+ * simplemente especificandole el path y el array de datos
  */
-class DatabaseConfigurer{
+class DatabaseConfigurer extends Db{
 
 	private $config;
 	private $ini_path;
@@ -82,7 +84,7 @@ class DatabaseConfigurer{
 	 * @param  [string] $option option de la function fopen
 	 * @return [type]
 	 */
-	public function escribirPuntoIni($option){
+	private function escribirPuntoIni($option){
 		if (is_writable($this->getIniPath())) {
 			$fp = fopen($this->getIniPath(),$option);
 			fwrite($fp, $this->ini_string);

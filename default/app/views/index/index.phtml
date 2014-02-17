@@ -11,7 +11,17 @@
             </div>
           </div>
     <?php endforeach ?>
+    <?php try {
+         if ($configurer::factory($key)->connect($db_configuracion[$key])): 
+             echo Html::link("index/control_usuario/$key","Crear Control de Usuarios","class='btn btn-default pull-right'");
+             echo '<div class="clearfix"></div>';
+         endif ;
+    } catch (Exception $e) {
+        Flash::error($e->getMessage());
+    } ?>
+    
 <?php endforeach ?>
+<hr>
 <?php echo Form::submit("Hecho","class='btn btn-default pull-right'") ?>
 <div class='clearfix '></div>
 <?php echo Form::close() ?>

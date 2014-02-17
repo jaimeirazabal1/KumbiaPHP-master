@@ -1,0 +1,48 @@
+
+<?php View::content()?>
+<?php if(!empty($usuario)):?>
+	
+	<?php if (!empty($reglas)): ?>
+			<div class="btn-group pull-left">
+			  <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+			    Mis Sitios <span class="caret"></span>
+			  </button>
+			  <ul class="dropdown-menu" role="menu">
+				
+			  <?php foreach ($reglas as $key => $value): ?>
+			    <?php if ($key!="admin"): ?>
+			    	<li><?php echo Html::link($value,$value) ?></li>
+			  	<?php endif ?>
+			  <?php endforeach ?>
+			  </ul>
+			</div>
+	<?php endif ?>
+	<div class="clearfix"></div>
+
+	<center >
+		<h3><?php echo ucfirst($usuario->nombre)." ".ucfirst($usuario->apellido) ?></h3>
+	</center>
+	
+	<div class="container">
+		<div class="row">
+		  <div class="col-md-4"><b>Número de Cédula</b></div>
+		  <div class="col-md-4"><?php echo $usuario->cedula ?></div>
+		</div>
+		<div class="row">
+		  <div class="col-md-4"><b>Nombre de Usuario</b></div>
+		  <div class="col-md-4"><?php echo $usuario->nombre_usuario ?></div>
+		</div>
+		<div class="row">
+		  <div class="col-md-4"><b>Usuario Administrador</b></div>
+		  <?php if($usuario->admin == 1): ?>
+		  	<div class="col-md-4"><?php echo "Es Administrador" ?></div>
+		  <?php else: ?>
+		  	<div class="col-md-4"><?php echo "No posee privilegios de Administrador" ?></div>
+		  <?php endif;?>
+		</div>
+		<br>
+		<?php echo Html::link("usuario/logout","Salir del Sistema","class=\"btn btn-warning center-block\" ")?>
+		<div class="clearfix"></div>
+	</div>
+<?php endif;?>
+		
