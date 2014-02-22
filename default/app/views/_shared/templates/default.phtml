@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
  <head>
@@ -18,6 +19,7 @@
             <h1 id='logo'>KumbiaPHP</h1>
             <h2 id='info-app'><small>web &amp; app Framework versión <?php echo kumbia_version() ?></small></h2>
         </div>
+        <?php View::partial("sesion_options") ?>
         <?php View::content(); ?>
         <hr>
         <?php View::partial('kumbia/footer') ?>

@@ -1,4 +1,5 @@
 
+
 <?php 
 /*
 	modelo para las reglas
@@ -8,16 +9,19 @@ class Regla extends ActiveRecord{
 		return $this->find("conditions: usuario_id = '$id'");
 	}
 	public function getRutas($id){
-		$rutas = array();
-		$permisos = $this->getReglasDeUsuario($id);
-		$admin = Load::model("usuario")->find_first("columns: admin","conditions: id='$id'");
-		foreach ($permisos as $key => $value) {
+		if ($id) {
+			$rutas = array();
+			$permisos = $this->getReglasDeUsuario($id);
+			$admin = Load::model("usuario")->find_first("columns: admin","conditions: id='$id'");
+			foreach ($permisos as $key => $value) {
 
-			$rutas[]=$value->url;
+				$rutas[]=$value->url;
+			}
+			
+			$rutas["admin"] = $admin->admin;
+			
+			return $rutas;
 		}
-		
-		$rutas["admin"] = $admin->admin;
-		return $rutas;
 	}
 	public function updatePermisos($idUsuario,$permisos,$admin){
 		if ($idUsuario and $permisos) {
@@ -49,6 +53,24 @@ class Regla extends ActiveRecord{
 		}
 		
 		return true;
-	}		
+	}	
+	public function darPermisosBases($usuario_id = null){
+		if ($usuario_id) {
+			$this->nuevaRegla("usuario/perfil",$usuario_id);
+			$this->nuevaRegla("usuario/login",$usuario_id);
+			$this->nuevaRegla("usuario/logout",$usuario_id);
+			return true;
+		}
+		return false;
+	}
+	public function nuevaRegla($url,$usuario_id){
+		$regla = new Regla();
+		$regla->url = $url;
+		$regla->usuario_id = $usuario_id;
+		if (!$regla->save()) {
+			return false;
+		}
+		return true;
+	}
 }
 ?>

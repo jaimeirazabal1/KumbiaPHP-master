@@ -1,4 +1,5 @@
 
+
 <?php 
 /*
 	controller para las reglas
@@ -6,7 +7,9 @@
 class ReglaController extends AppController{
 	
 	public function permisos($idUsuario = null){
-
+		if (Auth::is_valid() and !$idUsuario) {
+			$idUsuario = Auth::get("id");
+		}
 		if ($idUsuario) {
 			$config = Config::read("config");
 	    	if (!$config["application"]["production"]){

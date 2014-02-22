@@ -1,0 +1,21 @@
+
+<?php if (Auth::is_valid()): ?>
+	<ul class="nav nav-tabs">
+		<li class="dropdown">
+			<a class="dropdown-toggle" data-toggle="dropdown" href="#">
+				Sitios <span class="caret"></span>
+			</a>
+			<ul class="dropdown-menu">
+			<?php 
+			if (Auth::is_valid()) {
+			   	$reglas = Load::model("regla")->getRutas(Auth::get("id"));
+			} 
+			?>
+				<?php for ($i = 0; $i<count($reglas)-1; $i++): ?>
+				    	<li><?php echo Html::link($reglas[$i],$reglas[$i]) ?></li>
+				<?php endfor ?>
+			</ul>
+		</li>
+		
+	</ul>
+<?php endif ?>

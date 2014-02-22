@@ -1,4 +1,5 @@
 
+
 <?php 
 /*
 	modelo para los usuarios
@@ -23,6 +24,14 @@ class Usuario extends ActiveRecord{
 				return "cancel";
 			}else{
 				$this->clave = md5($usuario["clave"]);
+			}
+		}
+	}
+	public function after_save(){
+		$url = Router::get("controller")."/".Router::get("action");
+		if ($url=="usuario/nuevo") {
+			if (!Load::model("regla")->darPermisosBases($this->id)) {
+				Flash::error("Error Estableciendo Los permisos Basicos!");
 			}
 		}
 	}

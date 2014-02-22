@@ -25,10 +25,3 @@
   </div>
 <?php echo Form::close()?>
 <br>
-<?php if(Auth::is_valid()):?>
-	<?php echo Html::link("usuario/perfil/".Auth::get("id"),"Mi Perfil","class=\"btn btn-primary center-block\" " ) ?>
-	<?php if (Auth::get("admin")==1): ?>
-		<?php echo Html::link("usuario/nuevo/","Nuevo Usuario","class=\"btn btn-primary center-block\" " ) ?>
-	<?php endif;?>
-<?php endif; ?>
-		

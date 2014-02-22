@@ -93,6 +93,9 @@ class ControlDeUsuarios extends Db{
 			Flash::error("Linea: ". __LINE__);
 			return false;
 		}
+		if (!$this->reconstruirTemplateDefault()) {
+			return false;
+		}
 		return true;
 	}
 	/**
@@ -162,6 +165,7 @@ class ControlDeUsuarios extends Db{
 	 */
 	public function getModeloUsuario(){
 		$modelo = '
+
 <?php 
 /*
 	modelo para los usuarios
@@ -186,6 +190,14 @@ class Usuario extends ActiveRecord{
 				return "cancel";
 			}else{
 				$this->clave = md5($usuario["clave"]);
+			}
+		}
+	}
+	public function after_save(){
+		$url = Router::get("controller")."/".Router::get("action");
+		if ($url=="usuario/nuevo") {
+			if (!Load::model("regla")->darPermisosBases($this->id)) {
+				Flash::error("Error Estableciendo Los permisos Basicos!");
 			}
 		}
 	}
@@ -214,6 +226,7 @@ class Usuario extends ActiveRecord{
 	 */
 	public function getModeloRegla(){
 		$modelo = '
+
 <?php 
 /*
 	modelo para las reglas
@@ -223,16 +236,19 @@ class Regla extends ActiveRecord{
 		return $this->find("conditions: usuario_id = \'$id\'");
 	}
 	public function getRutas($id){
-		$rutas = array();
-		$permisos = $this->getReglasDeUsuario($id);
-		$admin = Load::model("usuario")->find_first("columns: admin","conditions: id=\'$id\'");
-		foreach ($permisos as $key => $value) {
+		if ($id) {
+			$rutas = array();
+			$permisos = $this->getReglasDeUsuario($id);
+			$admin = Load::model("usuario")->find_first("columns: admin","conditions: id=\'$id\'");
+			foreach ($permisos as $key => $value) {
 
-			$rutas[]=$value->url;
+				$rutas[]=$value->url;
+			}
+			
+			$rutas["admin"] = $admin->admin;
+			
+			return $rutas;
 		}
-		
-		$rutas["admin"] = $admin->admin;
-		return $rutas;
 	}
 	public function updatePermisos($idUsuario,$permisos,$admin){
 		if ($idUsuario and $permisos) {
@@ -264,7 +280,25 @@ class Regla extends ActiveRecord{
 		}
 		
 		return true;
-	}		
+	}	
+	public function darPermisosBases($usuario_id = null){
+		if ($usuario_id) {
+			$this->nuevaRegla("usuario/perfil",$usuario_id);
+			$this->nuevaRegla("usuario/login",$usuario_id);
+			$this->nuevaRegla("usuario/logout",$usuario_id);
+			return true;
+		}
+		return false;
+	}
+	public function nuevaRegla($url,$usuario_id){
+		$regla = new Regla();
+		$regla->url = $url;
+		$regla->usuario_id = $usuario_id;
+		if (!$regla->save()) {
+			return false;
+		}
+		return true;
+	}
 }
 ?>';
 		return $modelo;
@@ -275,6 +309,7 @@ class Regla extends ActiveRecord{
 	 */
 	public function getControllerRegla(){
 		$controller = '
+
 <?php 
 /*
 	controller para las reglas
@@ -282,7 +317,9 @@ class Regla extends ActiveRecord{
 class ReglaController extends AppController{
 	
 	public function permisos($idUsuario = null){
-
+		if (Auth::is_valid() and !$idUsuario) {
+			$idUsuario = Auth::get("id");
+		}
 		if ($idUsuario) {
 			$config = Config::read("config");
 	    	if (!$config["application"]["production"]){
@@ -363,7 +400,8 @@ class UsuarioController extends AppController{
 			}
 		}
     }				
-}
+}				
+
 ?>';
 		return $controller;
 	}
@@ -385,6 +423,9 @@ class UsuarioController extends AppController{
 			return false;
 		}
 		if (!$this->crearVistaRegla()) {
+			return false;
+		}
+		if (!$this->crearPartials()) {
 			return false;
 		}
 		return true;
@@ -415,6 +456,45 @@ class UsuarioController extends AppController{
 	public function crearVistaRegla(){
 		if (!Util::crearArchivoPhp("w+",APP_PATH."views".DIRECTORY_SEPARATOR."regla".DIRECTORY_SEPARATOR,"permisos",$this->getPermisosString(),"phtml")) {
 			Flash::error("No se pudo crear la vista de reglas 'permisos'");
+			return false;
+		}
+		return true;
+	}
+	public function crearPartials(){
+		
+		if (!Util::crearArchivoPhp("w+",APP_PATH."views".DIRECTORY_SEPARATOR."_shared".DIRECTORY_SEPARATOR."partials".DIRECTORY_SEPARATOR,"sesion_options",$this->getSesionControlPartialString(),"phtml")) {
+			Flash::error("No se pudo crear el partial sesion_options.phtml");
+			return false;
+		}
+		return true;
+	}
+	public function reconstruirTemplateDefault(){
+		if (!$this->borrarTemplate("default")) {
+			Flash::error("Falla al borrar template por defecto!");
+			return false;	
+		}
+		if (!$this->crearTemplate("default",$this->getDefaultTemplateString())) {
+			Flash::error("Error creando template por defecto!");
+			return false;
+		}
+		return true;
+	}
+	public function borrarTemplate($template){
+		$path = APP_PATH."views".DIRECTORY_SEPARATOR."_shared".DIRECTORY_SEPARATOR."templates".DIRECTORY_SEPARATOR.$template.".phtml";
+		if (file_exists($path)) {
+			if (!unlink($path)) {
+				Flash::error("No se puedo borrar el template $path");
+				return false;
+			}
+			return true;
+		}
+		Flash::error("No existe el template en $path");
+		return false;
+	}
+	public function crearTemplate($nombre,$contenido){
+		$path = APP_PATH."views".DIRECTORY_SEPARATOR."_shared".DIRECTORY_SEPARATOR."templates".DIRECTORY_SEPARATOR;
+		if (!Util::crearArchivoPhp("w+",$path,$nombre,$contenido,"phtml")) {
+			Flash::error("Falló al crear el template $nombre");
 			return false;
 		}
 		return true;
@@ -450,14 +530,7 @@ class UsuarioController extends AppController{
     </div>
   </div>
 <?php echo Form::close()?>
-<br>
-<?php if(Auth::is_valid()):?>
-	<?php echo Html::link("usuario/perfil/".Auth::get("id"),"Mi Perfil","class=\"btn btn-primary center-block\" " ) ?>
-	<?php if (Auth::get("admin")==1): ?>
-		<?php echo Html::link("usuario/nuevo/","Nuevo Usuario","class=\"btn btn-primary center-block\" " ) ?>
-	<?php endif;?>
-<?php endif; ?>
-		';
+<br>';
 	}
 	/**
 	 * retorna la vista del perfil
@@ -468,21 +541,7 @@ class UsuarioController extends AppController{
 <?php View::content()?>
 <?php if(!empty($usuario)):?>
 	
-	<?php if (!empty($reglas)): ?>
-			<div class="btn-group pull-left">
-			  <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
-			    Mis Sitios <span class="caret"></span>
-			  </button>
-			  <ul class="dropdown-menu" role="menu">
-				
-			  <?php foreach ($reglas as $key => $value): ?>
-			    <?php if ($key!="admin"): ?>
-			    	<li><?php echo Html::link($value,$value) ?></li>
-			  	<?php endif ?>
-			  <?php endforeach ?>
-			  </ul>
-			</div>
-	<?php endif ?>
+	
 	<div class="clearfix"></div>
 
 	<center >
@@ -507,7 +566,7 @@ class UsuarioController extends AppController{
 		  <?php endif;?>
 		</div>
 		<br>
-		<?php echo Html::link("usuario/logout","Salir del Sistema","class=\"btn btn-warning center-block\" ")?>
+		
 		<div class="clearfix"></div>
 	</div>
 <?php endif;?>
@@ -557,7 +616,6 @@ class UsuarioController extends AppController{
   <div class="form-group">
     <div class="col-sm-offset-2 col-sm-20 ">
       <button type="submit" class="btn btn-primary pull-rigth">Crear</button>
-      <?php echo Html::link("usuario/login","Atras","class=\"btn btn-default\" pull-rigth")?>
     </div>
   </div>
 </form>
@@ -587,7 +645,7 @@ class UsuarioController extends AppController{
 			</div>
 		</div>
 	<?php endforeach ?>
-<?php echo Html::link("usuario/nuevo","Nuevo Usuario","class=\'btn btn-primary center-block\'") ?>
+
 <?php endif ?>
 		';
 	}
@@ -630,7 +688,6 @@ class UsuarioController extends AppController{
 </div>
 <div class="form-group">
 	<?php echo Form::submit("Aceptar","class=\"pull-right btn btn-success\" ") ?>
-	<?php echo Html::link("usuario/","Lista de Usuarios","class=\"btn btn-default pull-right\" ") ?>
 
 	<div class="clearfix"></div>
 </div>
@@ -664,7 +721,7 @@ class UsuarioController extends AppController{
 		try {
 			for ($i=0; $i <count($controllerClass) ; $i++) { 
 			$controllers_methods[$controllerClass[$i]] = array_diff(get_class_methods($controllerClass[$i]),
-			array("initialize","finalize","__construct","before_filter","after_filter","k_callback"));
+			array("initialize","finalize","__construct","before_filter","after_filter","k_callback","exiteVistaYControladorLogin","existaModeloReglaYMetodo","permisosComunes"));
 			}
 		} catch (Exception $e) {
 			Flash::error($e->getMessage());
@@ -697,6 +754,59 @@ class UsuarioController extends AppController{
 		}
 		return true;
 	}
-	
+	public function getSesionControlPartialString(){
+		return '
+<?php if (Auth::is_valid()): ?>
+	<ul class="nav nav-tabs">
+		<li class="dropdown">
+			<a class="dropdown-toggle" data-toggle="dropdown" href="#">
+				Sitios <span class="caret"></span>
+			</a>
+			<ul class="dropdown-menu">
+			<?php 
+			if (Auth::is_valid()) {
+			   	$reglas = Load::model("regla")->getRutas(Auth::get("id"));
+			} 
+			?>
+				<?php for ($i = 0; $i<count($reglas)-1; $i++): ?>
+				    	<li><?php echo Html::link($reglas[$i],$reglas[$i]) ?></li>
+				<?php endfor ?>
+			</ul>
+		</li>
+		
+	</ul>
+<?php endif ?>';
+	}
+	public function getDefaultTemplateString(){
+		return '
+<!DOCTYPE html>
+<html lang="es">
+ <head>
+  <meta http-equiv=\'Content-type\' content=\'text/html; charset=<?php echo APP_CHARSET ?>\' />
+  <title>App Framework</title>
+  <?php //Tag::css(\'bienvenida\') ?>
+  <?php //Tag::css(\'style\') ?>
+  <?php Tag::css("bootstrap/bootstrap.min") ?>
+  <?php echo Html::includeCss() ?>
+  <?php echo Tag::js("jquery-1.11.0.min") ?>
+  <?php echo Tag::js("bootstrap/bootstrap.min") ?>
+  <?php echo Tag::js("underscore-min") ?>
+  <?php echo Tag::js("backbone-min") ?>
+</head>
+<body>
+    <div id=\'content\' class=\' container\'>
+        <div id=\'head\' class=\'page-header\'>
+            <h1 id=\'logo\'>KumbiaPHP</h1>
+            <h2 id=\'info-app\'><small>web &amp; app Framework versión <?php echo kumbia_version() ?></small></h2>
+        </div>
+        <?php View::partial("sesion_options") ?>
+        <?php View::content(); ?>
+        <hr>
+        <?php View::partial(\'kumbia/footer\') ?>
+    </div>
+</body>
+</html>
+';
+	}
 }
 ?>
