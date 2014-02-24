@@ -10,6 +10,7 @@ class IndexController extends AppController
     public function index(){
         
     	$config = Config::read("config");
+        $this->config = $config;
     	if (!$config['application']['production']) {
     		$this->configurer = new DatabaseConfigurer();
 	    	$this->db_configuracion = $this->configurer->getDbConfig();
